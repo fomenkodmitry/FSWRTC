@@ -3,29 +3,28 @@
 var connection = new signalR.HubConnectionBuilder().withUrl("/WebRTCHub").build();
 
 /****************************************************************************
-* Initial setup
-****************************************************************************/
+ * Initial setup
+ ****************************************************************************/
 
 const configuration = {
-   'iceServers': [
-       {
-         'urls': 'stun:stun.l.google.com:19302'
-       },
-       {
-           'urls': 'stun:stun1.l.google.com:19302'
-       },
-       {
-           'urls': 'stun:stun2.l.google.com:19302'
-       },
-       {
-           'urls': 'stun:stun3.l.google.com:19302'
-       },
-       {
-           'urls': 'stun:stun4.l.google.com:19302'
-       },
-       
-   ]
- };
+    'iceServers': [
+        {
+            'urls': 'stun:stun.l.google.com:19302'
+        },
+        {
+            'urls': 'stun:stun1.l.google.com:19302'
+        },
+        {
+            'urls': 'stun:stun2.l.google.com:19302'
+        },
+        {
+            'urls': 'stun:stun3.l.google.com:19302'
+        },
+        {
+            'urls': 'stun:stun4.l.google.com:19302'
+        },
+    ]
+};
 //
 // [{url:'stun:stun01.sipphone.com'},
 //     {url:'stun:stun.ekiga.net'},
@@ -47,20 +46,22 @@ const configuration = {
 //     {url:'stun:stun.voxgratia.org'},
 //     {url:'stun:stun.xten.com'},
 //     {
-//         url: 'turn:numb.viagenie.ca',
+//         urls: 'turn:numb.viagenie.ca',
 //         credential: 'muazkh',
 //         username: 'webrtc@live.com'
 //     },
 //     {
-//         url: 'turn:192.158.29.39:3478?transport=udp',
+//         urls: 'turn:192.158.29.39:3478?transport=udp',
 //         credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
 //         username: '28224511:1379330808'
 //     },
 //     {
-//         url: 'turn:192.158.29.39:3478?transport=tcp',
+//         urls: 'turn:192.158.29.39:3478?transport=tcp',
 //         credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
 //         username: '28224511:1379330808'
 //     }]
+
+
 const peerConn = new RTCPeerConnection(configuration);
 
 const roomNameTxt = document.getElementById('roomNameTxt');
@@ -85,9 +86,9 @@ sendFileBtn.disabled = true;
 
 $(roomTable).DataTable({
     columns: [
-        { data: 'RoomId', "width": "30%" },
-        { data: 'Name', "width": "50%" },
-        { data: 'Button', "width": "15%" }
+        {data: 'RoomId', "width": "30%"},
+        {data: 'Name', "width": "50%"},
+        {data: 'Button', "width": "15%"}
     ],
     "lengthChange": false,
     "searching": false,
@@ -100,8 +101,8 @@ $(roomTable).DataTable({
 grabWebCamVideo();
 
 /****************************************************************************
-* Signaling server
-****************************************************************************/
+ * Signaling server
+ ****************************************************************************/
 
 // Connect to the signaling server
 connection.start().then(function () {
@@ -170,8 +171,8 @@ connection.start().then(function () {
 });
 
 /**
-* Send message to signaling server
-*/
+ * Send message to signaling server
+ */
 function sendMessage(message) {
     console.log('Client sending message: ', message);
     connection.invoke("SendMessage", myRoomId, message).catch(function (err) {
@@ -180,8 +181,8 @@ function sendMessage(message) {
 }
 
 /****************************************************************************
-* Room management
-****************************************************************************/
+ * Room management
+ ****************************************************************************/
 
 $(createRoomBtn).click(function () {
     var name = roomNameTxt.value;
@@ -216,30 +217,28 @@ $(sendFileBtn).click(function () {
 });
 
 /****************************************************************************
-* User media (webcam)
-****************************************************************************/
+ * User media (webcam)
+ ****************************************************************************/
 
 function grabWebCamVideo() {
     console.log('Getting user media (video) ...');
 
     navigator.mediaDevices.enumerateDevices()
-        .then(function(devices) {
-            devices.forEach(function(device) {
+        .then(function (devices) {
+            devices.forEach(function (device) {
                 console.log(device.kind + ": " + device.label +
                     " id = " + device.deviceId);
             });
         })
-        .catch(function(err) {
+        .catch(function (err) {
             console.log(err.name + ": " + err.message);
         });
-    
+
     navigator.mediaDevices.getUserMedia({
-        audio: {
-            deviceId: "7e63bc6c8af561c4753d846ba619d3f17d807f9fb0012204de811bd8a5f7f260"
-        },
-        video: { 
-            width: 1280, 
-            height: 720 
+        audio: true,
+        video: {
+            width: 1280,
+            height: 720
         }
     })
         .then(gotStream)
@@ -256,8 +255,8 @@ function gotStream(stream) {
 }
 
 /****************************************************************************
-* WebRTC peer connection and data channel
-****************************************************************************/
+ * WebRTC peer connection and data channel
+ ****************************************************************************/
 
 var dataChannel;
 
@@ -265,9 +264,10 @@ function signalingMessageCallback(message) {
     if (message.type === 'offer') {
         console.log('Got offer. Sending answer to peer.');
         peerConn.setRemoteDescription(new RTCSessionDescription(message))
-            .then(function () { })
+            .then(function () {
+            })
             .catch(logError);
-        
+
         peerConn.createAnswer()
             .then(onLocalSessionCreated)
             .catch(logError);
@@ -275,7 +275,8 @@ function signalingMessageCallback(message) {
     } else if (message.type === 'answer') {
         console.log('Got answer.');
         peerConn.setRemoteDescription(new RTCSessionDescription(message))
-            .then(function () { })
+            .then(function () {
+            })
             .catch(logError);
 
     } else if (message.type === 'candidate') {
@@ -290,22 +291,25 @@ function createPeerConnection(isInitiator, config) {
     console.log('Creating Peer connection as initiator?', isInitiator, 'config:',
         config);
 
+    let isConnected = false;
     // send any ice candidates to the other peer
     peerConn.onicecandidate = function (event) {
+        if(isConnected)
+            return;
         console.log('icecandidate event:', event);
-        if (event.candidate) {
-            // Trickle ICE
-            //sendMessage({
-            //    type: 'candidate',
-            //    label: event.candidate.sdpMLineIndex,
-            //    id: event.candidate.sdpMid,
-            //    candidate: event.candidate.candidate
-            //});
-        } else {
-            console.log('End of candidates.');
+        // if (event.candidate) {
+        //     // Trickle ICE
+        //     sendMessage({
+        //        type: 'offer',
+        //        label: event.candidate.sdpMLineIndex,
+        //        id: event.candidate.sdpMid,
+        //        candidate: event.candidate.candidate
+        //     });
+        // } else {
             // Vanilla ICE
             sendMessage(peerConn.localDescription);
-        }
+        // }
+            isConnected = true;
     };
 
     peerConn.ontrack = function (event) {
@@ -427,8 +431,8 @@ function sendFile() {
 }
 
 /****************************************************************************
-* Auxiliary functions
-****************************************************************************/
+ * Auxiliary functions
+ ****************************************************************************/
 
 function logError(err) {
     if (!err) return;
@@ -438,4 +442,5 @@ function logError(err) {
         console.warn(err.toString(), err);
     }
 }
+
 localVideo.muted = true;
