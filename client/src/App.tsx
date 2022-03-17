@@ -1,7 +1,8 @@
 import React, {useEffect, useRef} from 'react';
 import './App.css';
-import SimplePeer from "simple-peer";
+
 import {HubConnectionBuilder} from "@microsoft/signalr";
+
 function App() {
 
     // /**
@@ -170,6 +171,7 @@ function App() {
      *                  Set to false if the peer receives the connection.
      */
     function addPeer(socket_id: string, am_initiator: boolean) {
+        // @ts-ignore
         peers[socket_id] = new SimplePeer({
             initiator: am_initiator,
             stream: localStream,
