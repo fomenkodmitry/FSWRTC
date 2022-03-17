@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import './App.css';
 
-import {HubConnectionBuilder} from "@microsoft/signalr";
+import {HubConnection, HubConnectionBuilder} from "@microsoft/signalr";
 
 function App() {
 
@@ -30,6 +30,21 @@ function App() {
         "iceServers": [
             {
                 urls: "stun:openrelay.metered.ca:80"
+            },
+            {
+                'urls': 'stun:stun.l.google.com:19302'
+            },
+            {
+                'urls': 'stun:stun1.l.google.com:19302'
+            },
+            {
+                'urls': 'stun:stun2.l.google.com:19302'
+            },
+            {
+                'urls': 'stun:stun3.l.google.com:19302'
+            },
+            {
+                'urls': 'stun:stun4.l.google.com:19302'
             },
             {
                 urls: "turn:openrelay.metered.ca:80",
@@ -68,11 +83,12 @@ function App() {
     }
     const videoRef = useRef(null);
     const localStream = useRef<MediaStream | undefined>(undefined);
-    let connection = new HubConnectionBuilder().withUrl("https://192.168.50.52:5001/WebRTCHub").build();
+    const connection = useRef<HubConnection | undefined>(undefined);
 
     useEffect(() => {
         const getUserMedia = async () => {
             try {
+                connection.current = new HubConnectionBuilder().withUrl("https://192.168.50.52:5001/WebRTCHub").build()
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 // @ts-ignore
                 videoRef.current.srcObject =
@@ -87,51 +103,38 @@ function App() {
 
     const init = () => {
         // Connect to the signaling server
-        connection.start().then(function () {
+        connection.current?.start().then(function () {
 
-            connection.on('initReceive', function (socket_id) {
+            connection.current?.on('initReceive', function (socket_id: string) {
                 console.log('INIT RECEIVE ' + socket_id)
                 addPeer(socket_id, false)
-                connection.invoke("InitSend", socket_id).catch(function (err) {
+                connection.current?.invoke("initSend", socket_id)
+                .catch(function (err : any) {
                     return console.error(err.toString());
                 });
             });
 
-            connection.on('initSend', function (socket_id) {
+            connection.current?.on('initSend', function (socket_id: string) {
                 console.log('INIT SEND ' + socket_id)
                 addPeer(socket_id, true)
             });
 
-            connection.on('removePeer', function (socket_id) {
+            connection.current?.on('removePeer', function (socket_id: string) {
                 console.log('removing peer ' + socket_id)
                 removePeer(socket_id)
             });
 
-            connection.on('disconnect', function () {
+            connection.current?.on('disconnect', function () {
                 console.log('GOT DISCONNECTED')
                 for (let socket_id in peers) {
                     removePeer(socket_id)
                 }
             });
-
-            connection.on('disconnect', function () {
-                console.log('GOT DISCONNECTED')
-                for (let socket_id in peers) {
-                    removePeer(socket_id)
-                }
-            });
-
-            connection.on('disconnect', function () {
-                console.log('GOT DISCONNECTED')
-                for (let socket_id in peers) {
-                    removePeer(socket_id)
-                }
-            });
-            connection.on('signal', function (data) {
+            connection.current?.on('signal', function (data : any) {
                 peers[data.socket_id].signal(data.signal)
             });
             
-        }).catch(function (err) {
+        }).catch(function (err : any) {
             return console.error(err.toString());
         });
     }
@@ -150,7 +153,7 @@ function App() {
             const tracks = videoEl.srcObject.getTracks();
 
             tracks.forEach(function (track: MediaStreamTrack) {
-                track.stop()
+                track?.stop()
             })
 
             videoEl.srcObject = null
@@ -171,19 +174,19 @@ function App() {
      *                  Set to false if the peer receives the connection.
      */
     function addPeer(socket_id: string, am_initiator: boolean) {
+        console.log(socket_id, am_initiator)
         // @ts-ignore
         peers[socket_id] = new SimplePeer({
             initiator: am_initiator,
-            stream: localStream,
+            stream: localStream.current,
             config: configuration
         })
 
         peers[socket_id].on('signal', (data: any) => {
-
-            connection.invoke("signal", {
+            connection.current?.invoke("signal", {
                     signal: data,
                     socket_id: socket_id
-            }).catch(function (err) {
+            }).catch(function (err : any) {
                 return console.error(err.toString());
             });
             
@@ -228,7 +231,7 @@ function App() {
         const tracks = localStream?.current?.getTracks();
 
         tracks?.forEach(function (track : MediaStreamTrack) {
-            track.stop()
+            track?.stop()
         })
         let localVideo = document.getElementById("localVideo") as HTMLVideoElement
         localVideo.srcObject = null
@@ -283,7 +286,7 @@ function App() {
             const tracks = localStream?.current?.getTracks();
 
             tracks?.forEach(function (track) {
-                track.stop()
+                track?.stop()
             })
             let localVideo = document.getElementById("localVideo") as HTMLVideoElement
 
