@@ -50,6 +50,16 @@ namespace webrtc_dotnetcore
                 app.UseHsts();
             }
 
+            // global cors policy
+            app.UseCors(x => x
+                    .WithOrigins()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .SetIsOriginAllowed((host) => true)
+                    .AllowCredentials()
+            );
+
+            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();

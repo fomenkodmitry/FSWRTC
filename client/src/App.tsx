@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import './App.css';
-import 'simple-peer'
 import SimplePeer from "simple-peer";
+import {HubConnectionBuilder} from "@microsoft/signalr";
 function App() {
 
     // /**
@@ -70,6 +70,7 @@ function App() {
         }
     }
     const videoRef = useRef(null);
+    let connection = new HubConnectionBuilder().withUrl("https://192.168.50.52:5001/WebRTCHub").build();
 
     useEffect(() => {
         const getUserMedia = async () => {
@@ -79,6 +80,7 @@ function App() {
                 localVideo.srcObject = stream;
 
                 localStream = stream;
+                init()
             } catch (err) {
                 console.log(err);
             }
@@ -86,41 +88,56 @@ function App() {
         getUserMedia();
     }, []);
 
+    const init = () => {
+        // Connect to the signaling server
+        connection.start().then(function () {
 
-    // /**
-    //  * initialize the socket connections
-    //  */
-    // function init() {
-    //     socket = io()
-    //
-    //     socket.on('initReceive', socket_id => {
-    //         console.log('INIT RECEIVE ' + socket_id)
-    //         addPeer(socket_id, false)
-    //
-    //         socket.emit('initSend', socket_id)
-    //     })
-    //     socket.on('initSend', socket_id => {
-    //         console.log('INIT SEND ' + socket_id)
-    //         addPeer(socket_id, true)
-    //     })
-    //
-    //     socket.on('removePeer', socket_id => {
-    //         console.log('removing peer ' + socket_id)
-    //         removePeer(socket_id)
-    //     })
-    //
-    //     socket.on('disconnect', () => {
-    //         console.log('GOT DISCONNECTED')
-    //         for (let socket_id in peers) {
-    //             removePeer(socket_id)
-    //         }
-    //     })
-    //
-    //     socket.on('signal', data => {
-    //         peers[data.socket_id].signal(data.signal)
-    //     })
-    // }
-//
+            connection.on('initReceive', function (socket_id) {
+                console.log('INIT RECEIVE ' + socket_id)
+                addPeer(socket_id, false)
+                connection.invoke("InitSend", socket_id).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            });
+
+            connection.on('initSend', function (socket_id) {
+                console.log('INIT SEND ' + socket_id)
+                addPeer(socket_id, true)
+            });
+
+            connection.on('removePeer', function (socket_id) {
+                console.log('removing peer ' + socket_id)
+                removePeer(socket_id)
+            });
+
+            connection.on('disconnect', function () {
+                console.log('GOT DISCONNECTED')
+                for (let socket_id in peers) {
+                    removePeer(socket_id)
+                }
+            });
+
+            connection.on('disconnect', function () {
+                console.log('GOT DISCONNECTED')
+                for (let socket_id in peers) {
+                    removePeer(socket_id)
+                }
+            });
+
+            connection.on('disconnect', function () {
+                console.log('GOT DISCONNECTED')
+                for (let socket_id in peers) {
+                    removePeer(socket_id)
+                }
+            });
+            connection.on('signal', function (data) {
+                peers[data.socket_id].signal(data.signal)
+            });
+            
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+    }
    
     /**
      * Remove a peer with given socket_id.
@@ -164,10 +181,14 @@ function App() {
         })
 
         peers[socket_id].on('signal', (data: any) => {
-            // socket.emit('signal', {
-            //     signal: data,
-            //     socket_id: socket_id
-            // })
+
+            connection.invoke("signal", {
+                    signal: data,
+                    socket_id: socket_id
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+            
         })
 
         peers[socket_id].on('stream', (stream: MediaProvider | null) => {

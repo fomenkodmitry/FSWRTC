@@ -20,7 +20,7 @@ namespace webrtc_dotnetcore.Hubs
             {
                 if (id == Context.ConnectionId)
                     continue;
-                // peers[id].emit('initReceive', socket.id)
+                Clients.All.SendAsync("initReceive", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
         }
@@ -28,97 +28,30 @@ namespace webrtc_dotnetcore.Hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
             _peers.Remove(Context.ConnectionId);
+            Clients.All.SendAsync("removePeer", Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task Signal()
+        public async Task Signal(Signal signal)
         {
+
+            await Clients.All.SendAsync("signal", signal);
+
             // await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
             // await Clients.Caller.SendAsync("joined", roomId);
             // await Clients.Group(roomId).SendAsync("ready");
 
         }
 
-        public async Task initSend()
+        public async Task InitSend(string socketId)
         {
-            await Clients.All.SendAsync("initSend");
-        }
-
-    }
-
-    /// <summary>
-    /// Room management for WebRTCHub
-    /// </summary>
-    public class RoomManager
-    {
-        private int nextRoomId;
-        /// <summary>
-        /// Room List (key:RoomId)
-        /// </summary>
-        private ConcurrentDictionary<int, RoomInfo> rooms;
-
-        public RoomManager()
-        {
-            nextRoomId = 1;
-            rooms = new ConcurrentDictionary<int, RoomInfo>();
-        }
-
-        public RoomInfo CreateRoom(string connectionId, string name)
-        {
-            rooms.TryRemove(nextRoomId, out _);
-
-            //create new room info
-            var roomInfo = new RoomInfo
-            {
-                RoomId = nextRoomId.ToString(),
-                Name = name,
-                HostConnectionId = connectionId
-            };
-            bool result = rooms.TryAdd(nextRoomId, roomInfo);
-
-            if (result)
-            {
-                nextRoomId++;
-                return roomInfo;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public void DeleteRoom(int roomId)
-        {
-            rooms.TryRemove(roomId, out _);
-        }
-
-        public void DeleteRoom(string connectionId)
-        {
-            int? correspondingRoomId = null;
-            foreach (var pair in rooms)
-            {
-                if (pair.Value.HostConnectionId.Equals(connectionId))
-                {
-                    correspondingRoomId = pair.Key;
-                }
-            }
-
-            if (correspondingRoomId.HasValue)
-            {
-                rooms.TryRemove(correspondingRoomId.Value, out _);
-            }
-        }
-
-        public List<RoomInfo> GetAllRoomInfo()
-        {
-            return rooms.Values.ToList();
+            await Clients.All.SendAsync("initSend", socketId);
         }
     }
 
-    public class RoomInfo
+    public class Signal
     {
-        public string RoomId { get; set; }
-        public string Name { get; set; }
-        public string HostConnectionId { get; set; }
+        public string socket_id { get; set; }
+        public object signal { get; set; }
     }
 }
