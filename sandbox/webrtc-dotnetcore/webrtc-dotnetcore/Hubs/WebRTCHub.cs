@@ -35,7 +35,11 @@ namespace webrtc_dotnetcore.Hubs
         public async Task Signal(Signal signal)
         {
             Console.WriteLine("sending signal from " + Context.ConnectionId +" to " + signal.signal.ToString() + " | " + signal.socket_id);
-            await Clients.Client(signal.socket_id).SendAsync("signal", signal);
+            await Clients.Client(signal.socket_id).SendAsync("signal", new
+            {
+                soket_id = Context.ConnectionId,
+                signal = signal.signal
+            });
 
             // await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
             // await Clients.Caller.SendAsync("joined", roomId);
