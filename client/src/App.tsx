@@ -9,10 +9,7 @@ function App() {
     //  * Socket.io socket
     //  */
     // let socket;
-    /**
-     * The stream object used to send media
-     */
-    let localStream: MediaStream | undefined;
+ 
     /**
      * All peer connections
      */
@@ -70,13 +67,16 @@ function App() {
         }
     }
     const videoRef = useRef(null);
+    const localStream = useRef<MediaStream | undefined>(undefined);
     let connection = new HubConnectionBuilder().withUrl("https://192.168.50.52:5001/WebRTCHub").build();
 
     useEffect(() => {
         const getUserMedia = async () => {
             try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 // @ts-ignore
-                videoRef.current.srcObject =  await navigator.mediaDevices.getUserMedia(constraints);
+                videoRef.current.srcObject =
+                localStream.current = stream;
                 init()
             } catch (err) {
                 console.log(err);
@@ -225,7 +225,7 @@ function App() {
             constraints.video.facingMode.ideal = 'user'
         }
 
-        const tracks = localStream?.getTracks();
+        const tracks = localStream?.current?.getTracks();
 
         tracks?.forEach(function (track : MediaStreamTrack) {
             track.stop()
@@ -244,7 +244,7 @@ function App() {
                 }
             }
 
-            localStream = stream
+            localStream.current = stream
             localVideo.srcObject = stream
 
             updateButtons()
@@ -267,9 +267,9 @@ function App() {
                 }
 
             }
-            localStream = stream
+            localStream.current = stream
             let localVideo = document.getElementById("localVideo") as HTMLVideoElement
-            localVideo.srcObject = localStream
+            localVideo.srcObject = localStream.current
             // socket.emit('removeUpdatePeer', '')
         })
         updateButtons()
@@ -280,9 +280,9 @@ function App() {
      */
     function removeLocalStream() {
         if (localStream) {
-            const tracks = localStream.getTracks();
+            const tracks = localStream?.current?.getTracks();
 
-            tracks.forEach(function (track) {
+            tracks?.forEach(function (track) {
                 track.stop()
             })
             let localVideo = document.getElementById("localVideo") as HTMLVideoElement
@@ -312,11 +312,11 @@ function App() {
      */
     const toggleVid = () => {
             // @ts-ignore
-        for (let index in localStream.getVideoTracks()) {
+        for (let index in localStream.current.getVideoTracks()) {
             // @ts-ignore
-            localStream.getVideoTracks()[index].enabled = !localStream.getVideoTracks()[index].enabled
+            localStream.current.getVideoTracks()[index].enabled = !localStream.current.getVideoTracks()[index].enabled
             // @ts-ignore
-            vidButton.innerText = localStream.getVideoTracks()[index].enabled ? "Video Enabled" : "Video Disabled"
+            vidButton.innerText = localStream.current.getVideoTracks()[index].enabled ? "Video Enabled" : "Video Disabled"
         }
     }
 
@@ -325,14 +325,14 @@ function App() {
      */
     const updateButtons = () => {
         // @ts-ignore
-        for (let index in localStream.getVideoTracks()) {
+        for (let index in localStream.current.getVideoTracks()) {
             // @ts-ignore
-            vidButton.innerText = localStream.getVideoTracks()[index].enabled ? "Video Enabled" : "Video Disabled"
+            vidButton.innerText = localStream.current.getVideoTracks()[index].enabled ? "Video Enabled" : "Video Disabled"
         }
         // @ts-ignore
-        for (let index in localStream.getAudioTracks()) {
+        for (let index in localStream.current.getAudioTracks()) {
             // @ts-ignore
-            muteButton.innerText = localStream.getAudioTracks()[index].enabled ? "Unmuted" : "Muted"
+            muteButton.innerText = localStream.current.getAudioTracks()[index].enabled ? "Unmuted" : "Muted"
         }
     }
     
