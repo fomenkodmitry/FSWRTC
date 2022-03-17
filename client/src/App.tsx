@@ -22,7 +22,6 @@ function App() {
     let muteButton = document.getElementById("muteButton")
     
     let vidButton = document.getElementById("vidButton")
-    //////////// CONFIGURATION //////////////////
 
     /**
      * RTCPeerConnection configuration
@@ -75,11 +74,8 @@ function App() {
     useEffect(() => {
         const getUserMedia = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                let localVideo = document.getElementById("localVideo") as HTMLVideoElement
-                localVideo.srcObject = stream;
-
-                localStream = stream;
+                // @ts-ignore
+                videoRef.current.srcObject =  await navigator.mediaDevices.getUserMedia(constraints);
                 init()
             } catch (err) {
                 console.log(err);
