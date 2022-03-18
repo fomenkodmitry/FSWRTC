@@ -21,7 +21,7 @@ namespace webrtc_dotnetcore.Hubs
                 if (id == Context.ConnectionId)
                     continue;
                 Console.WriteLine("Sending init recieve to " + Context.ConnectionId);
-                Clients.Client(id).SendAsync("initReceive", Context.ConnectionId);
+                Clients.Client(id).SendAsync("InitReceive", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
         }
@@ -29,7 +29,7 @@ namespace webrtc_dotnetcore.Hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
             Console.WriteLine("DISCONNECTED " + Context.ConnectionId);
-            Clients.Clients(_peers.Keys.Select(p => p).ToList()).SendAsync("removePeer", Context.ConnectionId);
+            Clients.Clients(_peers.Keys.Select(p => p).ToList()).SendAsync("RemovePeer", Context.ConnectionId);
             _peers.Remove(Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
@@ -37,7 +37,7 @@ namespace webrtc_dotnetcore.Hubs
         public async Task Signal(Signal signal)
         {
             Console.WriteLine("sending signal from " + Context.ConnectionId +" to " + signal.signal.ToString() + " | " + signal.socket_id);
-            await Clients.Client(signal.socket_id).SendAsync("signal", new
+            await Clients.Client(signal.socket_id).SendAsync("Signal", new
             {
                 soket_id = Context.ConnectionId,
                 signal = signal.signal
@@ -52,7 +52,7 @@ namespace webrtc_dotnetcore.Hubs
         public async Task InitSend(string socketId)
         {
             Console.WriteLine("INIT SEND" + socketId);
-            await Clients.Client(socketId).SendAsync("initSend", Context.ConnectionId);
+            await Clients.Client(socketId).SendAsync("InitSend", Context.ConnectionId);
         }
     }
 

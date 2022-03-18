@@ -72,7 +72,7 @@ function init() {
     // Connect to the signaling server
     connection?.start().then(function () {
 
-        connection?.on('initReceive', function (socket_id) {
+        connection?.on('InitReceive', function (socket_id) {
             console.log('INIT RECEIVE ' + socket_id)
             addPeer(socket_id, false)
             connection?.invoke("InitSend", socket_id)
@@ -81,23 +81,23 @@ function init() {
                 });
         });
 
-        connection?.on('initSend', function (socket_id) {
+        connection?.on('InitSend', function (socket_id) {
             console.log('INIT SEND ' + socket_id)
             addPeer(socket_id, true)
         });
 
-        connection?.on('removePeer', function (socket_id) {
+        connection?.on('RemovePeer', function (socket_id) {
             console.log('removing peer ' + socket_id)
             removePeer(socket_id)
         });
 
-        connection?.on('disconnect', function () {
+        connection?.on('Disconnect', function () {
             console.log('GOT DISCONNECTED')
             for (let socket_id in peers) {
                 removePeer(socket_id)
             }
         });
-        connection?.on('signal', function (data) {
+        connection?.on('Signal', function (data) {
             peers[data.socket_id].signal(data.signal)
         });
 
@@ -243,7 +243,7 @@ function setScreen() {
         localStream = stream
 
         localVideo.srcObject = localStream
-        socket.emit('removeUpdatePeer', '')
+        socket.emit('RemoveUpdatePeer', '')
     })
     updateButtons()
 }
