@@ -11,24 +11,26 @@ namespace webrtc_dotnetcore.Hubs
 {
     public class WebRTCHub : Hub
     {
-        private static Dictionary<string, string> _peers = new Dictionary<string, string>();
+        private static Dictionary<string, HubCallerContext> _peers = new Dictionary<string, HubCallerContext>();
 
         public override Task OnConnectedAsync()
         {
-            _peers.Add(Context.ConnectionId, Context.ConnectionId);
+            _peers.Add(Context.ConnectionId, Context);
             foreach (var (id, _) in _peers) 
             {
                 if (id == Context.ConnectionId)
                     continue;
-                Clients.All.SendAsync("initReceive", Context.ConnectionId);
+                Console.WriteLine("Sending init recieve to " + Context.ConnectionId);
+                Clients.Client(id).SendAsync("initReceive", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
+            Console.WriteLine("DISCONNECTED " + Context.ConnectionId);
+            Clients.Clients(_peers.Keys.Select(p => p).ToList()).SendAsync("removePeer", Context.ConnectionId);
             _peers.Remove(Context.ConnectionId);
-            Clients.All.SendAsync("removePeer", Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
 
@@ -49,6 +51,7 @@ namespace webrtc_dotnetcore.Hubs
 
         public async Task InitSend(string socketId)
         {
+            Console.WriteLine("INIT SEND" + socketId);
             await Clients.Client(socketId).SendAsync("initSend", Context.ConnectionId);
         }
     }
