@@ -6,59 +6,71 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace webrtc_dotnetcore.Hubs
 {
     public class WebRTCHub : Hub
     {
-        private static Dictionary<string, HubCallerContext> _peers = new Dictionary<string, HubCallerContext>();
+        private static IList<IDictionary<string, HubCallerContext>> _rooms =
+            new List<IDictionary<string, HubCallerContext>>();
+        private static string UserName = Guid.NewGuid().ToString();
 
+        private string Room = string.Join("-", new[] { "room" });
+        private IDictionary<string, HubCallerContext> CurrentRoom = null;
+
+        private IDictionary<string, HubCallerContext> GetCurrentRoom()
+        {
+            CurrentRoom = _rooms.LastOrDefault();
+            if (CurrentRoom == null)
+            {
+                CurrentRoom = new Dictionary<string, HubCallerContext>();
+                _rooms?.Add(CurrentRoom);
+            }
+            CurrentRoom.Add(Context.ConnectionId, Context);
+
+            return CurrentRoom;
+        }
+        
         public override Task OnConnectedAsync()
         {
-            _peers.Add(Context.ConnectionId, Context);
-            foreach (var (id, _) in _peers) 
-            {
-                if (id == Context.ConnectionId)
-                    continue;
-                Console.WriteLine("Sending init recieve to " + Context.ConnectionId);
-                Clients.Client(id).SendAsync("InitReceive", Context.ConnectionId);
-            }
+            Clients.Group(Room).SendAsync("newCaller", Context.ConnectionId);
+            Groups.AddToGroupAsync(Context.ConnectionId, Room);
             return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            Console.WriteLine("DISCONNECTED " + Context.ConnectionId);
-            Clients.Clients(_peers.Keys.Select(p => p).ToList()).SendAsync("RemovePeer", Context.ConnectionId);
-            _peers.Remove(Context.ConnectionId);
+            Clients.Group(Room).SendAsync("removePeer", Context.ConnectionId);
+            GetCurrentRoom().Remove(Context.ConnectionId);
+            Groups.RemoveFromGroupAsync(Context.ConnectionId, Room);
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task Signal(Signal signal)
+        public async Task signal(Signal signal)
         {
-            Console.WriteLine("sending signal from " + Context.ConnectionId +" to " + signal.signal.ToString() + " | " + signal.socket_id);
-            await Clients.Client(signal.socket_id).SendAsync("Signal", new
+            Console.WriteLine(signal.signal);
+            await Clients.Client(signal.socketId).SendAsync("signal", new
             {
-                soket_id = Context.ConnectionId,
+                socketId = Context.ConnectionId,
                 signal = signal.signal
             });
-
-            // await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-            // await Clients.Caller.SendAsync("joined", roomId);
-            // await Clients.Group(roomId).SendAsync("ready");
-
         }
 
-        public async Task InitSend(string socketId)
+        public async Task sendMessage(string meesage)
         {
-            Console.WriteLine("INIT SEND" + socketId);
-            await Clients.Client(socketId).SendAsync("InitSend", Context.ConnectionId);
+            await Clients.Group(Room).SendAsync("receiveMessage", new {meesage, userName = UserName});
+        }
+        
+        public async Task receivedCall(string receiverSocketId)
+        {
+            await Clients.Client(receiverSocketId).SendAsync("receivedCall", Context.ConnectionId);
         }
     }
 
     public class Signal
     {
-        public string socket_id { get; set; }
+        public string socketId { get; set; }
         public object signal { get; set; }
     }
 }
