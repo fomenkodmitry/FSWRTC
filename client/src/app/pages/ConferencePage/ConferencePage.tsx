@@ -31,9 +31,7 @@ function ConferencePage(props: ConferencePageProps) {
 
   useEffect(() => {
     requestPermission().then(() => {
-      // socket.auth = { username: user.name };
-      // socket. = { 'username' : 'anik' };
-
+      socket.baseUrl = socket.baseUrl + "?username=" + user.name
       connect();
     });
   }, [requestPermission, connect, socket, user]);

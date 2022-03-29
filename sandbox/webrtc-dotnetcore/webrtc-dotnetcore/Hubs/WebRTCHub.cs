@@ -14,8 +14,7 @@ namespace webrtc_dotnetcore.Hubs
     {
         private static IList<IDictionary<string, HubCallerContext>> _rooms =
             new List<IDictionary<string, HubCallerContext>>();
-        private static string UserName = Guid.NewGuid().ToString();
-
+ 
         private string Room = string.Join("-", new[] { "room" });
         private IDictionary<string, HubCallerContext> CurrentRoom = null;
 
@@ -57,9 +56,9 @@ namespace webrtc_dotnetcore.Hubs
             });
         }
 
-        public async Task sendMessage(string meesage)
+        public async Task sendMessage(string message)
         {
-            await Clients.Group(Room).SendAsync("receiveMessage", new {meesage, userName = UserName});
+            await Clients.OthersInGroup(Room).SendAsync("receiveMessage", new {message, username = Context.GetHttpContext().Request.Query["username"]});
         }
         
         public async Task receivedCall(string receiverSocketId)
