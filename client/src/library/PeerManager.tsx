@@ -1,8 +1,9 @@
-import { Socket } from "socket.io-client";
-import EventHandler, { withEventHandler } from "./EventHandler";
+import getEventHandler from "./getEventHandler";
 import Peer from "./Peer";
 import User from "./User";
-import {HubConnection} from "@microsoft/signalr";
+import { HubConnection } from "@microsoft/signalr";
+import type { EventHandler } from "./types/EventHandler";
+import extendEventHandler from "./extendEventHandler";
 
 type PeerManagerEvent = {
   onConnect: (peer: InstanceType<typeof Peer>[]) => void;
@@ -24,7 +25,7 @@ class PeerManager {
     this.peers = {};
     this.user = user;
     this.socket = socket;
-    this.eventHandler = new EventHandler<PeerManagerEvent>();
+    this.eventHandler = extendEventHandler<PeerManagerEvent>(getEventHandler);
     this.configuration = configuration;
   }
 
@@ -67,7 +68,7 @@ class PeerManager {
   signal = (data: any) => {
     // if (this.peers[data.socketId]) {
     //   console.log(data.socketId, data.signal)
-      this.peers[data.socketId].signal(data.signal);
+    this.peers[data.socketId].signal(data.signal);
     // }
   };
 
@@ -90,6 +91,4 @@ class PeerManager {
   };
 }
 
-export default withEventHandler<PeerManagerEvent, typeof PeerManager>(
-  PeerManager
-);
+export default PeerManager;

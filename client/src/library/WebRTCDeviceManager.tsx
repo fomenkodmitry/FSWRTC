@@ -1,5 +1,6 @@
-import EventHandler, { withEventHandler } from "./EventHandler";
+import getEventHandler from "./getEventHandler";
 import { isEqual } from "lodash";
+import extendEventHandler from "./extendEventHandler";
 
 type WebRTCDeviceManagerEvent = {
   onStreamChange: (stream: MediaStream) => void;
@@ -18,7 +19,7 @@ class WebRTCDeviceManager {
   videoDevices: MediaDeviceInfo[] = [];
   audioDevices: MediaDeviceInfo[] = [];
   stream: MediaStream = new MediaStream();
-  eventHandler = new EventHandler<WebRTCDeviceManagerEvent>();
+  eventHandler = extendEventHandler<WebRTCDeviceManagerEvent>(getEventHandler);
 
   constructor() {
     navigator.mediaDevices.addEventListener(
@@ -113,7 +114,4 @@ class WebRTCDeviceManager {
   };
 }
 
-export default withEventHandler<
-  WebRTCDeviceManagerEvent,
-  typeof WebRTCDeviceManager
->(WebRTCDeviceManager);
+export default WebRTCDeviceManager;

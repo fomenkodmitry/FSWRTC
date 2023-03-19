@@ -1,8 +1,9 @@
+import { HubConnection } from "@microsoft/signalr";
 import User from "./User";
-import { Socket } from "socket.io-client";
 import SimplePeer, { SignalData } from "simple-peer";
-import EventHandler, { withEventHandler } from "./EventHandler";
-import {HubConnection} from "@microsoft/signalr";
+import getEventHandler from "./getEventHandler";
+import extendEventHandler from "./extendEventHandler";
+import type { EventHandler } from "./types/EventHandler";
 
 type PeerEvent = {
   onStream: (remoteStreams: MediaStream) => void;
@@ -19,7 +20,7 @@ export class Peer extends SimplePeer {
     this.socket = socket;
     this.user = new User();
     this.socketId = socketId;
-    this.eventHandler = new EventHandler<PeerEvent>();
+    this.eventHandler = extendEventHandler<PeerEvent>(getEventHandler);
 
     this.on("signal", this.onSignal);
     this.on("stream", this.onStream);
@@ -46,4 +47,4 @@ export class Peer extends SimplePeer {
   };
 }
 
-export default withEventHandler<PeerEvent, typeof Peer>(Peer);
+export default Peer;
