@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useEffect, useContext } from "react";
-import getChat from "../../library/getChat";
-import type { ChatMessage } from "../../library/types/Chat";
+import React, { useRef, useState, useMemo, useEffect, useContext } from "react";
+import Chat, { ChatMessage } from "../../library/Chat";
 import { useSocket } from "./SocketContext";
 
 type ChatState = {
-  messages: Array<ChatMessage>;
+  messages: ChatMessage[];
   sendMessage: (message: string) => void;
 };
 
@@ -24,27 +23,23 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const socket = useSocket();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const chat = useMemo(() => getChat(socket), []);
+  const ChatInstance = useRef(new Chat(socket)).current;
 
   useEffect(() => {
-    chat.addEventListener("onReceive", setMessages);
-    chat.addEventListener("onSend", setMessages);
-
+    ChatInstance.addEventListener("onReceive", setMessages);
+    ChatInstance.addEventListener("onSend", setMessages);
     return () => {
-      chat.removeEventListener("onReceive", setMessages);
-      chat.removeEventListener("onSend", setMessages);
+      ChatInstance.removeEventListener("onReceive", setMessages);
+      ChatInstance.removeEventListener("onSend", setMessages);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ChatInstance]);
 
   const chatContext = useMemo(() => {
     return {
       messages,
-      sendMessage: chat.send,
+      sendMessage: ChatInstance.send,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
+  }, [messages, ChatInstance]);
 
   return (
     <ChatContext.Provider value={chatContext}>{children}</ChatContext.Provider>

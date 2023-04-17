@@ -1,6 +1,4 @@
-import extendEventHandler from "./extendEventHandler";
-import getEventHandler from "./getEventHandler";
-import type { EventHandler } from "./types/EventHandler";
+import EventHandler, { withEventHandler } from "./EventHandler";
 import VideoStream from "./VideoStream";
 
 type UserEvent = {
@@ -18,7 +16,7 @@ class User {
     this.name = name;
     this.email = email;
     this.stream = new VideoStream();
-    this.eventHandler = extendEventHandler<UserEvent>(getEventHandler);
+    this.eventHandler = new EventHandler<UserEvent>();
   }
 
   getName = () => {
@@ -48,4 +46,4 @@ class User {
   };
 }
 
-export default User;
+export default withEventHandler<UserEvent, typeof User>(User);
